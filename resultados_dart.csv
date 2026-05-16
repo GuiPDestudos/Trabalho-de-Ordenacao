@@ -1,0 +1,4 @@
+Algoritmo,Comparacoes,Trocas,Tempo
+Bubble Sort,12488854,6250480,0.017417
+Selection Sort,12497500,4995,0.014857
+Insertion Sort,6255474,6250480,0.00614

@@ -1,29 +1,11 @@
-// =========================================================
-// Disciplina: Estrutura de Dados
-// Atividade: Algoritmos de Ordenação
-//
-// Algoritmos:
-//   - Bubble Sort
-//   - Selection Sort
-//   - Insertion Sort
-//
-// O programa:
-//   ✔ Lê os números do arquivo aleatorio.txt
-//   ✔ Executa os algoritmos
-//   ✔ Conta comparações
-//   ✔ Conta trocas
-//   ✔ Mede tempo de execução
-//   ✔ Exibe resultados
-//   ✔ Gera arquivo CSV para gráficos
-//
-// Linguagem: C++
-// =========================================================
-
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <chrono>
 #include <iomanip>
+#include <string>
+#include <utility>    // pair
+#include <functional> // function
 
 using namespace std;
 using namespace chrono;
@@ -33,30 +15,31 @@ using namespace chrono;
 // =========================================================
 
 struct Resultado {
-
-    long long comparacoes;
-    long long trocas;
-    double tempo;
+    long long comparacoes = 0;
+    long long trocas      = 0;
+    double    tempo       = 0.0;
 };
 
 // =========================================================
 // FUNÇÃO PARA LER O ARQUIVO
 // =========================================================
 
-vector<int> lerArquivo(string nomeArquivo) {
-
-    vector<int> numeros;
+vector<int> lerArquivo(const string& nomeArquivo) {
 
     ifstream arquivo(nomeArquivo);
 
+    if (!arquivo.is_open()) {
+        cerr << "Erro: nao foi possivel abrir o arquivo \""
+             << nomeArquivo << "\"\n";
+        return {};
+    }
+
+    vector<int> numeros;
     int valor;
 
     while (arquivo >> valor) {
-
         numeros.push_back(valor);
     }
-
-    arquivo.close();
 
     return numeros;
 }
@@ -65,38 +48,30 @@ vector<int> lerArquivo(string nomeArquivo) {
 // BUBBLE SORT
 // =========================================================
 
-Resultado bubbleSort(vector<int>& vetor) {
+Resultado bubbleSort(vector<int>& v) {
 
     Resultado r;
-
-    r.comparacoes = 0;
-    r.trocas = 0;
+    int n = (int)v.size();
 
     auto inicio = high_resolution_clock::now();
 
-    int n = vetor.size();
-
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n - 1; i++) {           // -1: última passagem é desnecessária
+        bool trocou = false;
 
         for (int j = 0; j < n - i - 1; j++) {
-
             r.comparacoes++;
 
-            if (vetor[j] > vetor[j + 1]) {
-
-                swap(vetor[j], vetor[j + 1]);
-
+            if (v[j] > v[j + 1]) {
+                swap(v[j], v[j + 1]);
                 r.trocas++;
+                trocou = true;
             }
         }
+
+        if (!trocou) break;                      // vetor já ordenado: para cedo
     }
 
-    auto fim = high_resolution_clock::now();
-
-    duration<double> tempoGasto = fim - inicio;
-
-    r.tempo = tempoGasto.count();
-
+    r.tempo = duration<double>(high_resolution_clock::now() - inicio).count();
     return r;
 }
 
@@ -104,45 +79,31 @@ Resultado bubbleSort(vector<int>& vetor) {
 // SELECTION SORT
 // =========================================================
 
-Resultado selectionSort(vector<int>& vetor) {
+Resultado selectionSort(vector<int>& v) {
 
     Resultado r;
-
-    r.comparacoes = 0;
-    r.trocas = 0;
+    int n = (int)v.size();
 
     auto inicio = high_resolution_clock::now();
 
-    int n = vetor.size();
-
-    for (int i = 0; i < n; i++) {
-
+    for (int i = 0; i < n - 1; i++) {
         int menor = i;
 
         for (int j = i + 1; j < n; j++) {
-
             r.comparacoes++;
 
-            if (vetor[j] < vetor[menor]) {
-
+            if (v[j] < v[menor]) {
                 menor = j;
             }
         }
 
         if (menor != i) {
-
-            swap(vetor[i], vetor[menor]);
-
+            swap(v[i], v[menor]);
             r.trocas++;
         }
     }
 
-    auto fim = high_resolution_clock::now();
-
-    duration<double> tempoGasto = fim - inicio;
-
-    r.tempo = tempoGasto.count();
-
+    r.tempo = duration<double>(high_resolution_clock::now() - inicio).count();
     return r;
 }
 
@@ -150,225 +111,137 @@ Resultado selectionSort(vector<int>& vetor) {
 // INSERTION SORT
 // =========================================================
 
-Resultado insertionSort(vector<int>& vetor) {
+Resultado insertionSort(vector<int>& v) {
 
     Resultado r;
-
-    r.comparacoes = 0;
-    r.trocas = 0;
+    int n = (int)v.size();
 
     auto inicio = high_resolution_clock::now();
 
-    int n = vetor.size();
-
     for (int i = 1; i < n; i++) {
+        int chave = v[i];
+        int j     = i - 1;
 
-        int chave = vetor[i];
-
-        int j = i - 1;
-
-        while (j >= 0 && vetor[j] > chave) {
-
+        // Conta cada comparação feita pelo while (incluindo a que falha)
+        while (j >= 0) {
             r.comparacoes++;
 
-            vetor[j + 1] = vetor[j];
-
-            r.trocas++;
-
-            j--;
+            if (v[j] > chave) {
+                v[j + 1] = v[j];
+                r.trocas++;
+                j--;
+            } else {
+                break;
+            }
         }
 
-        if (j >= 0) {
-
-            r.comparacoes++;
-        }
-
-        vetor[j + 1] = chave;
+        v[j + 1] = chave;
     }
 
-    auto fim = high_resolution_clock::now();
-
-    duration<double> tempoGasto = fim - inicio;
-
-    r.tempo = tempoGasto.count();
-
+    r.tempo = duration<double>(high_resolution_clock::now() - inicio).count();
     return r;
 }
 
 // =========================================================
-// FUNÇÃO PARA MOSTRAR RESULTADOS
+// HELPER: copia o vetor, ordena e devolve o resultado
 // =========================================================
 
-void mostrarResultado(
-    string algoritmo,
-    string arquivo,
-    Resultado r
-) {
+using FuncOrdenacao = function<Resultado(vector<int>&)>;
 
-    cout << "====================================================\n";
+Resultado copiarEOrdenar(const vector<int>& dados, FuncOrdenacao algoritmo) {
+    vector<int> copia = dados;
+    return algoritmo(copia);
+}
 
-    cout << "Algoritmo   : " << algoritmo << endl;
-    cout << "Arquivo     : " << arquivo << endl;
-    cout << "Comparacoes : " << r.comparacoes << endl;
-    cout << "Trocas      : " << r.trocas << endl;
+// =========================================================
+// EXIBIR TABELA DE RESULTADOS
+// =========================================================
 
-    cout << fixed << setprecision(6);
+void mostrarTabela(const vector<pair<string, Resultado>>& resultados) {
 
-    cout << "Tempo       : " << r.tempo << " segundos\n";
+    const int cNome  = 18;
+    const int cNum   = 15;
 
-    cout << "====================================================\n\n";
+    cout << "\n";
+    cout << left
+         << setw(cNome) << "Algoritmo"
+         << setw(cNum)  << "Comparacoes"
+         << setw(cNum)  << "Trocas"
+         << setw(cNum)  << "Tempo (s)"
+         << "\n";
+
+    cout << string(cNome + cNum * 3, '-') << "\n";
+
+    for (const auto& [nome, r] : resultados) {
+        cout << setw(cNome) << nome
+             << setw(cNum)  << r.comparacoes
+             << setw(cNum)  << r.trocas
+             << fixed << setprecision(6)
+             << setw(cNum)  << r.tempo
+             << "\n";
+    }
+
+    cout << "\n";
 }
 
 // =========================================================
 // GERAR CSV PARA GRÁFICOS
 // =========================================================
 
-void gerarCSV(
-    Resultado bubble,
-    Resultado selection,
-    Resultado insertion
-) {
+void gerarCSV(const vector<pair<string, Resultado>>& resultados,
+              const string& nomeCSV = "resultados_cpp.csv") {
 
-    ofstream csv("resultados.csv");
+    ofstream csv(nomeCSV);
 
     csv << "Algoritmo,Comparacoes,Trocas,Tempo\n";
 
-    csv << "Bubble Sort,"
-        << bubble.comparacoes << ","
-        << bubble.trocas << ","
-        << bubble.tempo << "\n";
+    for (const auto& [nome, r] : resultados) {
+        csv << nome << ","
+            << r.comparacoes << ","
+            << r.trocas << ","
+            << r.tempo << "\n";
+    }
 
-    csv << "Selection Sort,"
-        << selection.comparacoes << ","
-        << selection.trocas << ","
-        << selection.tempo << "\n";
-
-    csv << "Insertion Sort,"
-        << insertion.comparacoes << ","
-        << insertion.trocas << ","
-        << insertion.tempo << "\n";
-
-    csv.close();
+    cout << "Arquivo \"" << nomeCSV << "\" gerado com sucesso!\n";
+    cout << "Use Excel, LibreOffice ou Python para gerar os graficos.\n\n";
 }
 
 // =========================================================
 // MAIN
 // =========================================================
 
-int main() {
+int main(int argc, char* argv[]) {
 
-    string arquivo = "/home/gui/PyCharmMiscProject/aleatorio.txt";
+    // Permite passar o arquivo como argumento; usa aleatorio.txt por padrão
+    string arquivo = (argc > 1) ? argv[1] : "/home/gui/Documentos/Trabalho-de-Ordenacao/aleatorio.txt";
 
-    cout << "\nLENDO ARQUIVO...\n\n";
-
-    // =====================================================
-    // LÊ OS DADOS DO ARQUIVO
-    // =====================================================
+    cout << "\nLendo arquivo: " << arquivo << " ...\n\n";
 
     vector<int> dados = lerArquivo(arquivo);
 
     if (dados.empty()) {
-
-    cout << "\nNenhum numero foi carregado!\n";
-
-    return 1;
+        cerr << "Nenhum numero foi carregado. Encerrando.\n";
+        return 1;
     }
 
-    cout << "Quantidade de numeros carregados: "
-         << dados.size() << "\n\n";
+    cout << "Numeros carregados: " << dados.size() << "\n";
 
     // =====================================================
-    // BUBBLE SORT
+    // EXECUTA OS ALGORITMOS
     // =====================================================
 
-    vector<int> vetorBubble = dados;
-
-    Resultado resultadoBubble =
-        bubbleSort(vetorBubble);
-
-    mostrarResultado(
-        "Bubble Sort",
-        arquivo,
-        resultadoBubble
-    );
+    vector<pair<string, Resultado>> resultados = {
+        { "Bubble Sort",    copiarEOrdenar(dados, bubbleSort)    },
+        { "Selection Sort", copiarEOrdenar(dados, selectionSort) },
+        { "Insertion Sort", copiarEOrdenar(dados, insertionSort) },
+    };
 
     // =====================================================
-    // SELECTION SORT
+    // EXIBE TABELA E GERA CSV
     // =====================================================
 
-    vector<int> vetorSelection = dados;
-
-    Resultado resultadoSelection =
-        selectionSort(vetorSelection);
-
-    mostrarResultado(
-        "Selection Sort",
-        arquivo,
-        resultadoSelection
-    );
-
-    // =====================================================
-    // INSERTION SORT
-    // =====================================================
-
-    vector<int> vetorInsertion = dados;
-
-    Resultado resultadoInsertion =
-        insertionSort(vetorInsertion);
-
-    mostrarResultado(
-        "Insertion Sort",
-        arquivo,
-        resultadoInsertion
-    );
-
-    // =====================================================
-    // TABELA RESUMO
-    // =====================================================
-
-    cout << "\nRESUMO DOS RESULTADOS\n\n";
-
-    cout << left
-         << setw(20) << "Algoritmo"
-         << setw(20) << "Comparacoes"
-         << setw(15) << "Trocas"
-         << setw(15) << "Tempo(s)"
-         << endl;
-
-    cout << "-------------------------------------------------------------\n";
-
-    cout << setw(20) << "Bubble Sort"
-         << setw(20) << resultadoBubble.comparacoes
-         << setw(15) << resultadoBubble.trocas
-         << setw(15) << resultadoBubble.tempo
-         << endl;
-
-    cout << setw(20) << "Selection Sort"
-         << setw(20) << resultadoSelection.comparacoes
-         << setw(15) << resultadoSelection.trocas
-         << setw(15) << resultadoSelection.tempo
-         << endl;
-
-    cout << setw(20) << "Insertion Sort"
-         << setw(20) << resultadoInsertion.comparacoes
-         << setw(15) << resultadoInsertion.trocas
-         << setw(15) << resultadoInsertion.tempo
-         << endl;
-
-    // =====================================================
-    // GERA CSV PARA GRÁFICOS
-    // =====================================================
-
-    gerarCSV(
-        resultadoBubble,
-        resultadoSelection,
-        resultadoInsertion
-    );
-
-    cout << "\nArquivo resultados.csv gerado com sucesso!\n";
-
-    cout << "\nUse o Excel, LibreOffice ou Python "
-         << "para gerar os graficos.\n";
+    mostrarTabela(resultados);
+    gerarCSV(resultados);
 
     return 0;
 }
